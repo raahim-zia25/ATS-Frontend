@@ -5,7 +5,8 @@ import axios from "axios";
 import { 
   Sparkles, Copy, Check, Terminal, Code2, 
   Briefcase, RefreshCw, FileText, Download, 
-  Cpu, Layers, CheckCircle2, ShieldCheck, Lightbulb, Activity, UploadCloud, FileType, Plus
+  Cpu, Layers, CheckCircle2, ShieldCheck, Lightbulb, 
+  Activity, UploadCloud, FileType, Plus, Menu, X 
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -19,6 +20,7 @@ interface MatchResult {
 
 export default function Home() {
   const [mode, setMode] = useState<"proposal" | "cv" | "ats">("proposal");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // Proposal Matrix States
   const [proposalInput, setProposalInput] = useState("");
@@ -61,15 +63,16 @@ export default function Home() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Handles injection into current working configurations
-  const injectSkillIntoCvBuffer = (skill: string) => {
-    if (injectedSkills.includes(skill)) return;
-    setInjectedSkills(prev => [...prev, skill]);
+  // Toggle Function: Adds skill if missing, removes if already present
+  const toggleSkillInjection = (skill: string) => {
+    setInjectedSkills((prev) => 
+      prev.includes(skill) 
+        ? prev.filter((s) => s !== skill) 
+        : [...prev, skill]
+    );
   };
 
-  // Compile modified document directly from the ATS stream
   const downloadAtsUpdatedPdf = async () => {
-    // 1. Validation checks
     const baselineText = matchData?.extracted_cv_text || atsCvInput || cvInput;
     if (!baselineText) {
         alert("No baseline CV layout text found to optimize.");
@@ -80,20 +83,15 @@ export default function Home() {
         return;
     }
 
-    // 2. Set backend URL
     const API_BASE = process.env.NEXT_PUBLIC_BACKEND_BASE_URL || "http://127.0.0.1:8000";
     setCompilingAtsPdf(true);
 
     try {
-        // 3. API Request to the corrected backend URL
         const res = await axios.post(`${API_BASE}/inject-skills-to-cv`, {
             cv_text: baselineText,
             skills_to_add: injectedSkills
         });
         
-        console.log("Backend Response:", res.data); // Helpful for debugging
-
-        // 4. Safely extract PDF data
         const targetedPdfData = res.data?.pdf_data;
         
         if (targetedPdfData) {
@@ -105,7 +103,6 @@ export default function Home() {
             const byteArray = new Uint8Array(byteNumbers);
             const blob = new Blob([byteArray], { type: "application/pdf" });
             
-            // 5. Trigger browser download
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement("a");
             link.href = url;
@@ -113,22 +110,20 @@ export default function Home() {
             document.body.appendChild(link);
             link.click();
             link.remove();
-            window.URL.revokeObjectURL(url); // Clean up memory
+            window.URL.revokeObjectURL(url);
         } else {
             console.error("No PDF data found in response:", res.data);
             alert("Compilation failed: No PDF data returned from server.");
         }
     } catch (err: any) {
         console.error("Download Error:", err);
-        // This will now show the actual error if the backend 404s or crashes
         const errorMsg = err.response?.data?.error || "Error building download stream from the source file.";
         alert(errorMsg);
     } finally {
         setCompilingAtsPdf(false);
     }
-};
+  };
 
-  // Main system engine execution mapping router
   const handleGenerate = async () => {
     setLoading(true);
     const API_BASE = process.env.NEXT_PUBLIC_BACKEND_BASE_URL || "http://127.0.0.1:8000";
@@ -165,7 +160,7 @@ export default function Home() {
     } finally {
         setLoading(false);
     }
-};
+  };
 
   const downloadPdfFile = () => {
     if (!base64Pdf) return;
@@ -187,14 +182,65 @@ export default function Home() {
   const strokeDashoffset = matchData ? ((100 - matchData.score) / 100) * (2 * Math.PI * radius) : 2 * Math.PI * radius;
 
   return (
-    <div className="min-h-screen bg-[#070a13] text-slate-100 flex font-sans relative overflow-hidden">
+    <div className="min-h-screen bg-[#070a13] text-slate-100 flex flex-col lg:flex-row font-sans relative overflow-x-hidden">
       
       {/* Background Ambience Layer */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50rem] h-[50rem] bg-indigo-600/10 rounded-full blur-[160px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[45rem] h-[45rem] bg-violet-600/10 rounded-full blur-[140px] pointer-events-none" />
+      <div className="fixed top-[-10%] left-[-10%] w-[50rem] h-[50rem] bg-indigo-600/10 rounded-full blur-[160px] pointer-events-none" />
+      <div className="fixed bottom-[-10%] right-[-10%] w-[45rem] h-[45rem] bg-violet-600/10 rounded-full blur-[140px] pointer-events-none" />
 
-      {/* Unified Master Sidebar Mapping */}
-      <aside className="w-80 border-r border-slate-800/40 bg-[#0b1120]/70 backdrop-blur-xl p-6 flex flex-col justify-between hidden lg:flex z-20">
+      {/* MOBILE TOP NAVIGATION BAR */}
+      <header className="lg:hidden sticky top-0 z-50 flex items-center justify-between p-4 border-b border-slate-800/60 bg-[#0b1120]/90 backdrop-blur-xl">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-lg shadow-[0_0_15px_rgba(79,70,229,0.3)]">
+            <Cpu className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <span className="font-bold text-sm bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent block leading-none mb-1">RAAHIM CORE</span>
+            <span className="text-[9px] font-mono tracking-widest text-indigo-400/80 uppercase block leading-none">Agent v2.7.0</span>
+          </div>
+        </div>
+
+        <button 
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="p-2 bg-slate-900/80 border border-slate-700/50 rounded-lg text-slate-300 hover:text-white transition-colors"
+        >
+          {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
+      </header>
+
+      {/* MOBILE DROPDOWN MENU */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div 
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="lg:hidden absolute top-[73px] left-0 right-0 z-40 bg-[#0b1120]/95 border-b border-slate-800/60 backdrop-blur-xl shadow-2xl overflow-hidden"
+          >
+            <div className="p-5 flex flex-col gap-2">
+              <span className="text-[10px] font-bold text-slate-500 tracking-widest uppercase mb-2 px-1">System Modules</span>
+              
+              <button onClick={() => { setMode("proposal"); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border transition-all ${mode === "proposal" ? "bg-gradient-to-r from-indigo-600/15 to-violet-600/5 border-indigo-500/30 text-white" : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/30"}`}>
+                <Briefcase className="w-4 h-4 text-indigo-400" />
+                <span className="text-sm font-medium tracking-wide">Proposal Matrix</span>
+              </button>
+
+              <button onClick={() => { setMode("cv"); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border transition-all ${mode === "cv" ? "bg-gradient-to-r from-indigo-600/15 to-violet-600/5 border-indigo-500/30 text-white" : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/30"}`}>
+                <FileText className="w-4 h-4 text-indigo-400" />
+                <span className="text-sm font-medium tracking-wide">AI CV PDF Engine</span>
+              </button>
+
+              <button onClick={() => { setMode("ats"); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border transition-all ${mode === "ats" ? "bg-gradient-to-r from-indigo-600/15 to-violet-600/5 border-indigo-500/30 text-white" : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/30"}`}>
+                <Activity className="w-4 h-4 text-indigo-400" />
+                <span className="text-sm font-medium tracking-wide">ATS Profiler Match</span>
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* DESKTOP SIDEBAR MENU */}
+      <aside className="w-80 border-r border-slate-800/40 bg-[#0b1120]/70 backdrop-blur-xl p-6 flex-col justify-between hidden lg:flex z-20 min-h-screen sticky top-0">
         <div className="space-y-8">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl shadow-[0_0_15px_rgba(79,70,229,0.3)]">
@@ -228,17 +274,17 @@ export default function Home() {
       </aside>
 
       {/* Main Working Framework Canvas Layout */}
-      <main className="flex-1 flex flex-col p-6 lg:p-10 max-w-7xl mx-auto w-full z-10 relative overflow-y-auto">
-        <header className="mb-8 border-b border-slate-900 pb-6">
+      <main className="flex-1 flex flex-col p-5 lg:p-10 w-full z-10 relative overflow-y-auto">
+        <div className="mb-6 lg:mb-8 border-b border-slate-900 pb-5">
           <h1 className="text-2xl lg:text-3xl font-extrabold text-white mb-2 bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
             {mode === "proposal" ? "High-Conversion Proposal Suite" : mode === "cv" ? "Executive Blueprint Document Compiler" : "Semantic ATS Diagnostic Profiler"}
           </h1>
-          <p className="text-xs text-slate-400 tracking-wide">
+          <p className="text-xs text-slate-400 tracking-wide max-w-2xl">
             {mode === "proposal" && "Transform messy raw client specifications into custom high-converting Upwork bids."}
             {mode === "cv" && "Compile markdown details into standard structured enterprise technical portfolios."}
             {mode === "ats" && "Drop your original resume asset file, track missing stacks, and output calibrated versions instantly."}
           </p>
-        </header>
+        </div>
 
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start flex-1 w-full">
           
@@ -294,7 +340,7 @@ export default function Home() {
               <button 
                 onClick={handleGenerate} 
                 disabled={loading || (mode === "proposal" ? !proposalInput.trim() : mode === "cv" ? !cvInput.trim() : (useUploadMode ? (!selectedFile || !atsJobInput.trim()) : (!atsCvInput.trim() || !atsJobInput.trim())))}
-                className="w-full mt-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-violet-600 text-white font-semibold text-sm py-3.5 rounded-xl transition-all"
+                className="w-full mt-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-violet-600 text-white font-semibold text-sm py-3.5 rounded-xl transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? "PROCESSING CRITERIA CHANNELS..." : mode === "proposal" ? "Compile System Proposals" : mode === "cv" ? "Build Digital Resume PDF" : "Execute System Optimization Scan"}
               </button>
@@ -304,7 +350,7 @@ export default function Home() {
           {/* RIGHT TERMINAL VIEWPORT SCREEN LAYER */}
           <div className="h-full flex flex-col">
             <div className="bg-[#0b1120]/50 border border-slate-800/50 rounded-2xl p-5 backdrop-blur-md flex-1 flex flex-col min-h-[420px] relative">
-              <div className="flex items-center justify-between mb-4 border-b border-slate-800/40 pb-3.5">
+              <div className="flex flex-wrap items-center justify-between gap-3 mb-4 border-b border-slate-800/40 pb-3.5">
                 <span className="text-[10px] font-bold tracking-widest text-slate-400 uppercase flex items-center gap-2">
                   <Terminal className="w-3.5 h-3.5 text-emerald-400" /> Terminal Monitor Output
                 </span>
@@ -319,16 +365,17 @@ export default function Home() {
 
                 {/* CV PDF Download Action */}
                 {mode === "cv" && base64Pdf && !loading && (
-                  <button onClick={downloadPdfFile} className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 py-1.5 px-3 rounded-xl ml-2 hover:bg-emerald-500/20">
+                  <button onClick={downloadPdfFile} className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 py-1.5 px-3 rounded-xl hover:bg-emerald-500/20 transition-all">
                     <Download className="w-3.5 h-3.5" /> Download Core CV PDF
                   </button>
                 )}
                 
                 {/* ATS Real-time direct compilation file trigger */}
                 {mode === "ats" && matchData && injectedSkills.length > 0 && !loading && (
-                  <button onClick={downloadAtsUpdatedPdf} disabled={compilingAtsPdf} className="flex items-center gap-1.5 text-xs text-indigo-400 bg-indigo-500/10 border border-indigo-500/30 py-1.5 px-3 rounded-xl hover:bg-indigo-500/20 transition-all">
+                  <button onClick={downloadAtsUpdatedPdf} disabled={compilingAtsPdf} className="flex items-center gap-1.5 text-xs text-indigo-400 bg-indigo-500/10 border border-indigo-500/30 py-1.5 px-3 rounded-xl hover:bg-indigo-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
                     {compilingAtsPdf ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
-                    <span>Compile & Download New CV</span>
+                    <span className="hidden sm:inline">Compile & Download New CV</span>
+                    <span className="sm:hidden">Download CV</span>
                   </button>
                 )}
               </div>
@@ -339,6 +386,7 @@ export default function Home() {
                     <div className="space-y-4 w-full mt-2">
                       <div className="h-3.5 bg-slate-900 rounded-md animate-pulse w-3/4" />
                       <div className="h-3.5 bg-slate-900 rounded-md animate-pulse w-5/6" />
+                      <div className="h-3.5 bg-slate-900 rounded-md animate-pulse w-4/5" />
                     </div>
                   )}
 
@@ -352,38 +400,46 @@ export default function Home() {
                   
                   {!loading && mode === "ats" && matchData && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 w-full text-left">
-                      <div className="flex items-center gap-6 p-4 bg-slate-950/60 border border-slate-900 rounded-2xl">
-                        <div className="relative w-28 h-28 flex items-center justify-center shrink-0">
+                      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 p-4 bg-slate-950/60 border border-slate-900 rounded-2xl text-center sm:text-left">
+                        <div className="relative w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center shrink-0">
                           <svg className="w-full h-full transform -rotate-90">
-                            <circle cx="56" cy="56" r={radius} className="stroke-slate-800" strokeWidth="8" fill="transparent" />
-                            <circle cx="56" cy="56" r={radius} className="stroke-indigo-500" strokeWidth="8" fill="transparent" strokeDasharray={2 * Math.PI * radius} strokeDashoffset={strokeDashoffset} />
+                            <circle cx="50%" cy="50%" r={radius} className="stroke-slate-800" strokeWidth="8" fill="transparent" />
+                            <circle cx="50%" cy="50%" r={radius} className="stroke-indigo-500" strokeWidth="8" fill="transparent" strokeDasharray={2 * Math.PI * radius} strokeDashoffset={strokeDashoffset} />
                           </svg>
                           <span className="absolute text-xl font-black text-white">{matchData.score}%</span>
                         </div>
-                        <div>
-                          <h4 className="text-white font-bold text-sm flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-indigo-400" /> Diagnostic Profile Match</h4>
-                          <p className="text-[11px] text-slate-400 mt-1">Select missing tools beneath to directly append keywords into your active file structure layer parameters.</p>
+                        <div className="mt-2 sm:mt-0">
+                          <h4 className="text-white font-bold text-sm flex items-center justify-center sm:justify-start gap-1.5"><ShieldCheck className="w-4 h-4 text-indigo-400" /> Diagnostic Profile Match</h4>
+                          <p className="text-[11px] text-slate-400 mt-1.5 leading-relaxed">Select missing tools beneath to directly append keywords into your active file structure layer parameters.</p>
                         </div>
                       </div>
 
-                      <div className="space-y-3.5">
+                      <div className="space-y-4">
                         <div>
-                          <span className="text-[10px] font-bold text-slate-500 tracking-wider block mb-2 uppercase">Verified Target Tools Detected</span>
-                          <div className="flex flex-wrap gap-1.5">
+                          <span className="text-[10px] font-bold text-slate-500 tracking-wider block mb-2.5 uppercase">Verified Target Tools Detected</span>
+                          <div className="flex flex-wrap gap-2">
                             {matchData.strong_matches.map((s, i) => (
-                              <span key={i} className="text-xs bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-2.5 py-1 rounded-lg">✓ {s}</span>
+                              <span key={i} className="text-xs bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-lg">✓ {s}</span>
                             ))}
                           </div>
                         </div>
 
                         <div>
-                          <span className="text-[10px] font-bold text-slate-500 tracking-wider block mb-2 uppercase">Missing Framework Demands</span>
-                          <div className="flex flex-wrap gap-1.5">
+                          <span className="text-[10px] font-bold text-slate-500 tracking-wider block mb-2.5 uppercase">Missing Framework Demands</span>
+                          <div className="flex flex-wrap gap-2">
                             {matchData.missing_skills.map((m, i) => {
                               const added = injectedSkills.includes(m);
                               return (
-                                <button key={i} onClick={() => injectSkillIntoCvBuffer(m)} disabled={added} className={`text-xs border px-2.5 py-1 rounded-lg flex items-center gap-1.5 transition-all ${added ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-300" : "bg-rose-500/10 border-rose-500/20 text-rose-450 text-rose-400 hover:bg-rose-500/20"}`}>
-                                  <span>{added ? "✓ Added to Queue" : `+ Inject ${m}`}</span>
+                                <button 
+                                  key={i} 
+                                  onClick={() => toggleSkillInjection(m)} 
+                                  className={`text-xs border px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${
+                                    added 
+                                      ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-300 hover:bg-rose-500/20 hover:border-rose-500/40 hover:text-rose-400 hover:line-through" 
+                                      : "bg-rose-500/10 border-rose-500/20 text-rose-400 hover:bg-indigo-500/20 hover:border-indigo-500/40 hover:text-indigo-400"
+                                  }`}
+                                >
+                                  <span>{added ? `✓ Added ${m} (Click to remove)` : `+ Inject ${m}`}</span>
                                 </button>
                               );
                             })}
@@ -391,10 +447,10 @@ export default function Home() {
                         </div>
                       </div>
 
-                      <div className="space-y-2 border-t border-slate-900 pt-4">
-                        <span className="text-[10px] font-bold text-slate-500 tracking-wider block mb-2 uppercase">ATS Diagnostic Improvements</span>
+                      <div className="space-y-3 border-t border-slate-900 pt-5">
+                        <span className="text-[10px] font-bold text-slate-500 tracking-wider block mb-3 uppercase">ATS Diagnostic Improvements</span>
                         {matchData.suggestions.map((item, index) => (
-                          <div key={index} className="flex gap-3 p-3 bg-slate-950/40 border border-slate-900 rounded-xl items-start">
+                          <div key={index} className="flex gap-3 p-3.5 bg-slate-950/40 border border-slate-900 rounded-xl items-start">
                             <Lightbulb className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                             <p className="text-xs text-slate-300 leading-relaxed font-sans">{item}</p>
                           </div>
@@ -405,8 +461,8 @@ export default function Home() {
 
                   {!loading && ((mode === "proposal" && !proposalOutput) || (mode === "cv" && !cvTextPreview) || (mode === "ats" && !matchData)) && (
                     <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6 pointer-events-none">
-                      <Terminal className="w-5 h-5 text-slate-800 mb-2" />
-                      <p className="text-xs text-slate-600">Awaiting parameter criteria submissions to calculate output values.</p>
+                      <Terminal className="w-6 h-6 text-slate-800 mb-3" />
+                      <p className="text-xs text-slate-600 max-w-[200px]">Awaiting parameter criteria submissions to calculate output values.</p>
                     </div>
                   )}
                 </AnimatePresence>
