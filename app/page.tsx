@@ -63,7 +63,6 @@ export default function Home() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Toggle Function: Adds skill if missing, removes if already present
   const toggleSkillInjection = (skill: string) => {
     setInjectedSkills((prev) => 
       prev.includes(skill) 
@@ -106,7 +105,7 @@ export default function Home() {
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement("a");
             link.href = url;
-            link.setAttribute("download", "Optimized_RaahimZia_CV.pdf");
+            link.setAttribute("download", "Optimized_CV.pdf");
             document.body.appendChild(link);
             link.click();
             link.remove();
@@ -132,12 +131,27 @@ export default function Home() {
         if (mode === "proposal") {
             if (!proposalInput.trim()) return;
             const res = await axios.post(`${API_BASE}/generate`, { job_description: proposalInput });
-            setProposalOutput(res.data.proposal);
+            
+            if (res.data.error) {
+              alert(res.data.error);
+              setProposalOutput("");
+            } else {
+              setProposalOutput(res.data.proposal);
+            }
+            
         } else if (mode === "cv") {
             if (!cvInput.trim()) return;
             const res = await axios.post(`${API_BASE}/generate-cv`, { personal_details: cvInput });
-            if (res.data.error) setCvTextPreview(res.data.error);
-            else { setCvTextPreview(res.data.text_preview); setBase64Pdf(res.data.pdf_data); }
+            
+            if (res.data.error) {
+              alert(res.data.error);
+              setCvTextPreview("");
+              setBase64Pdf("");
+            } else { 
+              setCvTextPreview(res.data.text_preview); 
+              setBase64Pdf(res.data.pdf_data); 
+            }
+            
         } else {
             setMatchData(null);
             if (useUploadMode) {
@@ -148,10 +162,20 @@ export default function Home() {
                 const res = await axios.post(`${API_BASE}/match-upload`, formData, {
                     headers: { "Content-Type": "multipart/form-data" }
                 });
-                setMatchData(res.data);
+                
+                if (res.data.error) {
+                  alert(res.data.error);
+                } else {
+                  setMatchData(res.data);
+                }
             } else {
                 const res = await axios.post(`${API_BASE}/match-score`, { cv_text: atsCvInput, job_description: atsJobInput });
-                setMatchData(res.data);
+                
+                if (res.data.error) {
+                  alert(res.data.error);
+                } else {
+                  setMatchData(res.data);
+                }
             }
         }
     } catch (err) {
@@ -195,14 +219,14 @@ export default function Home() {
             <Cpu className="w-5 h-5 text-white" />
           </div>
           <div>
-            <span className="font-bold text-sm bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent block leading-none mb-1">RAAHIM CORE</span>
+            <span className="font-bold text-sm bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent block leading-none mb-1">SYSTEM CORE</span>
             <span className="text-[9px] font-mono tracking-widest text-indigo-400/80 uppercase block leading-none">Agent v2.7.0</span>
           </div>
         </div>
 
         <button 
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="p-2 bg-slate-900/80 border border-slate-700/50 rounded-lg text-slate-300 hover:text-white transition-colors"
+          className="p-2 bg-slate-900/80 border border-slate-700/50 rounded-lg text-slate-300 hover:text-white transition-colors cursor-pointer"
         >
           {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
@@ -220,17 +244,17 @@ export default function Home() {
             <div className="p-5 flex flex-col gap-2">
               <span className="text-[10px] font-bold text-slate-500 tracking-widest uppercase mb-2 px-1">System Modules</span>
               
-              <button onClick={() => { setMode("proposal"); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border transition-all ${mode === "proposal" ? "bg-gradient-to-r from-indigo-600/15 to-violet-600/5 border-indigo-500/30 text-white" : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/30"}`}>
+              <button onClick={() => { setMode("proposal"); setIsMobileMenuOpen(false); }} className={`w-full cursor-pointer flex items-center gap-3 px-4 py-3.5 rounded-xl border transition-all ${mode === "proposal" ? "bg-gradient-to-r from-indigo-600/15 to-violet-600/5 border-indigo-500/30 text-white" : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/30"}`}>
                 <Briefcase className="w-4 h-4 text-indigo-400" />
                 <span className="text-sm font-medium tracking-wide">Proposal Matrix</span>
               </button>
 
-              <button onClick={() => { setMode("cv"); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border transition-all ${mode === "cv" ? "bg-gradient-to-r from-indigo-600/15 to-violet-600/5 border-indigo-500/30 text-white" : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/30"}`}>
+              <button onClick={() => { setMode("cv"); setIsMobileMenuOpen(false); }} className={`w-full cursor-pointer flex items-center gap-3 px-4 py-3.5 rounded-xl border transition-all ${mode === "cv" ? "bg-gradient-to-r from-indigo-600/15 to-violet-600/5 border-indigo-500/30 text-white" : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/30"}`}>
                 <FileText className="w-4 h-4 text-indigo-400" />
                 <span className="text-sm font-medium tracking-wide">AI CV PDF Engine</span>
               </button>
 
-              <button onClick={() => { setMode("ats"); setIsMobileMenuOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border transition-all ${mode === "ats" ? "bg-gradient-to-r from-indigo-600/15 to-violet-600/5 border-indigo-500/30 text-white" : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/30"}`}>
+              <button onClick={() => { setMode("ats"); setIsMobileMenuOpen(false); }} className={`w-full cursor-pointer flex items-center gap-3 px-4 py-3.5 rounded-xl border transition-all ${mode === "ats" ? "bg-gradient-to-r from-indigo-600/15 to-violet-600/5 border-indigo-500/30 text-white" : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/30"}`}>
                 <Activity className="w-4 h-4 text-indigo-400" />
                 <span className="text-sm font-medium tracking-wide">ATS Profiler Match</span>
               </button>
@@ -247,7 +271,7 @@ export default function Home() {
               <Cpu className="w-5 h-5 text-white" />
             </div>
             <div>
-              <span className="font-bold text-base bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent block">RAAHIM CORE</span>
+              <span className="font-bold text-base bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent block">SYSTEM CORE</span>
               <span className="text-[10px] font-mono tracking-widest text-indigo-400/80 uppercase block">Agent v2.7.0</span>
             </div>
           </div>
@@ -255,17 +279,17 @@ export default function Home() {
           <div className="space-y-2">
             <span className="text-[10px] font-bold text-slate-500 tracking-widest uppercase block px-1 mb-3">System Modules</span>
             
-            <button onClick={() => setMode("proposal")} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border transition-all ${mode === "proposal" ? "bg-gradient-to-r from-indigo-600/15 to-violet-600/5 border-indigo-500/30 text-white" : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/30"}`}>
+            <button onClick={() => setMode("proposal")} className={`w-full cursor-pointer flex items-center gap-3 px-4 py-3.5 rounded-xl border transition-all ${mode === "proposal" ? "bg-gradient-to-r from-indigo-600/15 to-violet-600/5 border-indigo-500/30 text-white" : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/30"}`}>
               <Briefcase className="w-4 h-4 text-indigo-400" />
               <span className="text-sm font-medium tracking-wide">Proposal Matrix</span>
             </button>
 
-            <button onClick={() => setMode("cv")} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border transition-all ${mode === "cv" ? "bg-gradient-to-r from-indigo-600/15 to-violet-600/5 border-indigo-500/30 text-white" : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/30"}`}>
+            <button onClick={() => setMode("cv")} className={`w-full cursor-pointer flex items-center gap-3 px-4 py-3.5 rounded-xl border transition-all ${mode === "cv" ? "bg-gradient-to-r from-indigo-600/15 to-violet-600/5 border-indigo-500/30 text-white" : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/30"}`}>
               <FileText className="w-4 h-4 text-indigo-400" />
               <span className="text-sm font-medium tracking-wide">AI CV PDF Engine</span>
             </button>
 
-            <button onClick={() => setMode("ats")} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border transition-all ${mode === "ats" ? "bg-gradient-to-r from-indigo-600/15 to-violet-600/5 border-indigo-500/30 text-white" : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/30"}`}>
+            <button onClick={() => setMode("ats")} className={`w-full cursor-pointer flex items-center gap-3 px-4 py-3.5 rounded-xl border transition-all ${mode === "ats" ? "bg-gradient-to-r from-indigo-600/15 to-violet-600/5 border-indigo-500/30 text-white" : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/30"}`}>
               <Activity className="w-4 h-4 text-indigo-400" />
               <span className="text-sm font-medium tracking-wide">ATS Profiler Match</span>
             </button>
@@ -297,8 +321,8 @@ export default function Home() {
                 </label>
                 {mode === "ats" && (
                   <div className="flex bg-slate-950/80 rounded-lg p-0.5 border border-slate-800 text-[10px] font-mono">
-                    <button onClick={() => setUseUploadMode(true)} className={`px-2 py-1 rounded-md transition-colors ${useUploadMode ? "bg-indigo-600 text-white" : "text-slate-400"}`}>Upload PDF</button>
-                    <button onClick={() => setUseUploadMode(false)} className={`px-2 py-1 rounded-md transition-colors ${!useUploadMode ? "bg-indigo-600 text-white" : "text-slate-400"}`}>Raw Text</button>
+                    <button onClick={() => setUseUploadMode(true)} className={`px-2 py-1 rounded-md transition-colors cursor-pointer ${useUploadMode ? "bg-indigo-600 text-white" : "text-slate-400"}`}>Upload PDF</button>
+                    <button onClick={() => setUseUploadMode(false)} className={`px-2 py-1 rounded-md transition-colors cursor-pointer ${!useUploadMode ? "bg-indigo-600 text-white" : "text-slate-400"}`}>Raw Text</button>
                   </div>
                 )}
               </div>
@@ -314,7 +338,7 @@ export default function Home() {
                   {mode === "ats" && (
                     <motion.div key="atsIn" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col gap-4">
                       {useUploadMode ? (
-                        <div className="h-2/5 relative border-2 border-dashed border-slate-800 rounded-xl bg-slate-950/20 p-4 flex flex-col items-center justify-center text-center">
+                        <div className="h-2/5 relative border-2 border-dashed border-slate-800 rounded-xl bg-slate-950/20 p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-900/40 transition-colors">
                           <input type="file" accept=".pdf" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
                           {selectedFile ? (
                             <div className="flex flex-col items-center gap-1.5">
@@ -324,7 +348,7 @@ export default function Home() {
                           ) : (
                             <div className="flex flex-col items-center gap-2">
                               <UploadCloud className="w-8 h-8 text-slate-600" />
-                              <p className="text-xs text-slate-300 font-medium">Select original RaahimZia_CV.pdf asset copy</p>
+                              <p className="text-xs text-slate-300 font-medium">Select original CV PDF asset</p>
                             </div>
                           )}
                         </div>
@@ -340,7 +364,7 @@ export default function Home() {
               <button 
                 onClick={handleGenerate} 
                 disabled={loading || (mode === "proposal" ? !proposalInput.trim() : mode === "cv" ? !cvInput.trim() : (useUploadMode ? (!selectedFile || !atsJobInput.trim()) : (!atsCvInput.trim() || !atsJobInput.trim())))}
-                className="w-full mt-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-violet-600 text-white font-semibold text-sm py-3.5 rounded-xl transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full mt-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-violet-600 text-white font-semibold text-sm py-3.5 rounded-xl transition-all cursor-pointer hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? "PROCESSING CRITERIA CHANNELS..." : mode === "proposal" ? "Compile System Proposals" : mode === "cv" ? "Build Digital Resume PDF" : "Execute System Optimization Scan"}
               </button>
@@ -357,7 +381,7 @@ export default function Home() {
                 
                 {/* Proposal / Text copy actions */}
                 {((mode === "proposal" && proposalOutput) || (mode === "cv" && cvTextPreview)) && !loading && (
-                  <button onClick={copyToClipboard} className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200">
+                  <button onClick={copyToClipboard} className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200 cursor-pointer">
                     {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
                     <span>{copied ? "Copied!" : "Copy"}</span>
                   </button>
@@ -365,14 +389,14 @@ export default function Home() {
 
                 {/* CV PDF Download Action */}
                 {mode === "cv" && base64Pdf && !loading && (
-                  <button onClick={downloadPdfFile} className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 py-1.5 px-3 rounded-xl hover:bg-emerald-500/20 transition-all">
+                  <button onClick={downloadPdfFile} className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 py-1.5 px-3 rounded-xl hover:bg-emerald-500/20 transition-all cursor-pointer">
                     <Download className="w-3.5 h-3.5" /> Download Core CV PDF
                   </button>
                 )}
                 
                 {/* ATS Real-time direct compilation file trigger */}
                 {mode === "ats" && matchData && injectedSkills.length > 0 && !loading && (
-                  <button onClick={downloadAtsUpdatedPdf} disabled={compilingAtsPdf} className="flex items-center gap-1.5 text-xs text-indigo-400 bg-indigo-500/10 border border-indigo-500/30 py-1.5 px-3 rounded-xl hover:bg-indigo-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                  <button onClick={downloadAtsUpdatedPdf} disabled={compilingAtsPdf} className="flex items-center gap-1.5 text-xs text-indigo-400 bg-indigo-500/10 border border-indigo-500/30 py-1.5 px-3 rounded-xl hover:bg-indigo-500/20 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
                     {compilingAtsPdf ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
                     <span className="hidden sm:inline">Compile & Download New CV</span>
                     <span className="sm:hidden">Download CV</span>
@@ -406,7 +430,7 @@ export default function Home() {
                             <circle cx="50%" cy="50%" r={radius} className="stroke-slate-800" strokeWidth="8" fill="transparent" />
                             <circle cx="50%" cy="50%" r={radius} className="stroke-indigo-500" strokeWidth="8" fill="transparent" strokeDasharray={2 * Math.PI * radius} strokeDashoffset={strokeDashoffset} />
                           </svg>
-                          <span className="absolute text-xl font-black text-white">{matchData.score}%</span>
+                          <span className="absolute text-xl font-black text-white">{matchData?.score || 0}%</span>
                         </div>
                         <div className="mt-2 sm:mt-0">
                           <h4 className="text-white font-bold text-sm flex items-center justify-center sm:justify-start gap-1.5"><ShieldCheck className="w-4 h-4 text-indigo-400" /> Diagnostic Profile Match</h4>
@@ -418,7 +442,7 @@ export default function Home() {
                         <div>
                           <span className="text-[10px] font-bold text-slate-500 tracking-wider block mb-2.5 uppercase">Verified Target Tools Detected</span>
                           <div className="flex flex-wrap gap-2">
-                            {matchData.strong_matches.map((s, i) => (
+                            {matchData?.strong_matches?.map((s, i) => (
                               <span key={i} className="text-xs bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-3 py-1.5 rounded-lg">✓ {s}</span>
                             ))}
                           </div>
@@ -427,13 +451,13 @@ export default function Home() {
                         <div>
                           <span className="text-[10px] font-bold text-slate-500 tracking-wider block mb-2.5 uppercase">Missing Framework Demands</span>
                           <div className="flex flex-wrap gap-2">
-                            {matchData.missing_skills.map((m, i) => {
+                            {matchData?.missing_skills?.map((m, i) => {
                               const added = injectedSkills.includes(m);
                               return (
                                 <button 
                                   key={i} 
                                   onClick={() => toggleSkillInjection(m)} 
-                                  className={`text-xs border px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all ${
+                                  className={`text-xs border px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all cursor-pointer ${
                                     added 
                                       ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-300 hover:bg-rose-500/20 hover:border-rose-500/40 hover:text-rose-400 hover:line-through" 
                                       : "bg-rose-500/10 border-rose-500/20 text-rose-400 hover:bg-indigo-500/20 hover:border-indigo-500/40 hover:text-indigo-400"
@@ -449,7 +473,7 @@ export default function Home() {
 
                       <div className="space-y-3 border-t border-slate-900 pt-5">
                         <span className="text-[10px] font-bold text-slate-500 tracking-wider block mb-3 uppercase">ATS Diagnostic Improvements</span>
-                        {matchData.suggestions.map((item, index) => (
+                        {matchData?.suggestions?.map((item, index) => (
                           <div key={index} className="flex gap-3 p-3.5 bg-slate-950/40 border border-slate-900 rounded-xl items-start">
                             <Lightbulb className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                             <p className="text-xs text-slate-300 leading-relaxed font-sans">{item}</p>
