@@ -219,7 +219,7 @@ export default function Home() {
             <Cpu className="w-5 h-5 text-white" />
           </div>
           <div>
-            <span className="font-bold text-sm bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent block leading-none mb-1">SYSTEM CORE</span>
+            <span className="font-bold text-sm bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent block leading-none mb-1">Raahim CORE</span>
             <span className="text-[9px] font-mono tracking-widest text-indigo-400/80 uppercase block leading-none">Agent v2.7.0</span>
           </div>
         </div>
@@ -271,7 +271,7 @@ export default function Home() {
               <Cpu className="w-5 h-5 text-white" />
             </div>
             <div>
-              <span className="font-bold text-base bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent block">SYSTEM CORE</span>
+              <span className="font-bold text-base bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent block">Raahim CORE</span>
               <span className="text-[10px] font-mono tracking-widest text-indigo-400/80 uppercase block">Agent v2.7.0</span>
             </div>
           </div>
