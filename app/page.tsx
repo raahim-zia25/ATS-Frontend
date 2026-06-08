@@ -248,7 +248,7 @@ export default function Home() {
             <Cpu className="w-5 h-5 text-white" />
           </div>
           <div>
-            <span className="font-bold text-sm bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent block leading-none mb-1">Raahim Core</span>
+            <span className="font-bold text-sm bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent block leading-none mb-1">SYSTEM CORE</span>
             <span className="text-[9px] font-mono tracking-widest text-indigo-400/80 uppercase block leading-none">Agent v2.7.0</span>
           </div>
         </div>
@@ -298,7 +298,7 @@ export default function Home() {
               <Cpu className="w-5 h-5 text-white" />
             </div>
             <div>
-              <span className="font-bold text-base bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent block">Raahim Core</span>
+              <span className="font-bold text-base bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent block">SYSTEM CORE</span>
               <span className="text-[10px] font-mono tracking-widest text-indigo-400/80 uppercase block">Agent v2.7.0</span>
             </div>
           </div>
@@ -459,9 +459,9 @@ export default function Home() {
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 w-full text-left">
                       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 p-4 bg-slate-950/60 border border-slate-900 rounded-2xl text-center sm:text-left">
                         <div className="relative w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center shrink-0">
-                          <svg className="w-full h-full transform -rotate-90 transition-all duration-500 ease-out">
-                            <circle cx="50%" cy="50%" r={radius} className="stroke-slate-800" strokeWidth="8" fill="transparent" />
-                            <circle cx="50%" cy="50%" r={radius} className="stroke-indigo-500 transition-all duration-500 ease-out" strokeWidth="8" fill="transparent" strokeDasharray={2 * Math.PI * radius} strokeDashoffset={strokeDashoffset} />
+                          <svg viewBox="0 0 120 120" className="w-full h-full transform -rotate-90 transition-all duration-500 ease-out">
+                            <circle cx="60" cy="60" r={radius} className="stroke-slate-800" strokeWidth="8" fill="transparent" />
+                            <circle cx="60" cy="60" r={radius} className="stroke-indigo-500 transition-all duration-500 ease-out" strokeWidth="8" fill="transparent" strokeDasharray={2 * Math.PI * radius} strokeDashoffset={strokeDashoffset} />
                           </svg>
                           <span className="absolute text-xl font-black text-white">{displayScore}%</span>
                         </div>
@@ -506,7 +506,6 @@ export default function Home() {
 
                       <div className="space-y-3 border-t border-slate-900 pt-5">
                         <span className="text-[10px] font-bold text-slate-500 tracking-wider block mb-3 uppercase">ATS Diagnostic Improvements</span>
-                        {/* BULLETPROOF RENDERING: Automatically flattens stubborn objects if the AI disobeys */}
                         {matchData?.suggestions?.map((item, index) => (
                           <div key={index} className="flex gap-3 p-3.5 bg-slate-950/40 border border-slate-900 rounded-xl items-start">
                             <Lightbulb className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
