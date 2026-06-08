@@ -14,7 +14,8 @@ interface MatchResult {
   score: number;
   strong_matches: string[];
   missing_skills: string[];
-  suggestions: string[];
+  // Changed this from string[] to any[] so TypeScript allows objects if the AI hallucinates them
+  suggestions: any[]; 
   extracted_cv_text?: string;
 }
 
@@ -53,6 +54,12 @@ export default function Home() {
         alert("Please select a valid PDF document layout asset.");
       }
     }
+  };
+
+  const clearSelectedFile = () => {
+    setSelectedFile(null);
+    setMatchData(null); 
+    setInjectedSkills([]); 
   };
 
   const copyToClipboard = () => {
@@ -125,6 +132,7 @@ export default function Home() {
 
   const handleGenerate = async () => {
     setLoading(true);
+    setInjectedSkills([]);
     const API_BASE = process.env.NEXT_PUBLIC_BACKEND_BASE_URL || "http://127.0.0.1:8000";
 
     try {
@@ -202,24 +210,45 @@ export default function Home() {
     link.remove();
   };
 
+  // --- DYNAMIC REAL-TIME SCORE CALCULATION ---
+  const baseMatches = matchData?.strong_matches?.length || 0;
+  const baseMissing = matchData?.missing_skills?.length || 0;
+  const totalSkills = baseMatches + baseMissing;
+  
+  const dynamicMatches = baseMatches + injectedSkills.length;
+  const displayScore = matchData && totalSkills > 0 
+    ? Math.round((dynamicMatches / totalSkills) * 100) 
+    : (matchData?.score || 0);
+
   const radius = 52;
-  const strokeDashoffset = matchData ? ((100 - matchData.score) / 100) * (2 * Math.PI * radius) : 2 * Math.PI * radius;
+  const strokeDashoffset = matchData ? ((100 - displayScore) / 100) * (2 * Math.PI * radius) : 2 * Math.PI * radius;
+
+  // --- BULLETPROOF RENDER HELPER FOR SUGGESTIONS ---
+  const renderSuggestionText = (item: any) => {
+    if (typeof item === 'string') return item;
+    if (typeof item === 'object' && item !== null) {
+      // If AI sends { skill: "React", metric: "Add %", context: "..." }
+      // This flattens it beautifully into: "SKILL: React | METRIC: Add % | CONTEXT: ..."
+      return Object.entries(item)
+        .map(([key, val]) => `${key.toUpperCase()}: ${val}`)
+        .join(' | ');
+    }
+    return String(item);
+  };
 
   return (
     <div className="min-h-screen bg-[#070a13] text-slate-100 flex flex-col lg:flex-row font-sans relative overflow-x-hidden">
       
-      {/* Background Ambience Layer */}
       <div className="fixed top-[-10%] left-[-10%] w-[50rem] h-[50rem] bg-indigo-600/10 rounded-full blur-[160px] pointer-events-none" />
       <div className="fixed bottom-[-10%] right-[-10%] w-[45rem] h-[45rem] bg-violet-600/10 rounded-full blur-[140px] pointer-events-none" />
 
-      {/* MOBILE TOP NAVIGATION BAR */}
       <header className="lg:hidden sticky top-0 z-50 flex items-center justify-between p-4 border-b border-slate-800/60 bg-[#0b1120]/90 backdrop-blur-xl">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-lg shadow-[0_0_15px_rgba(79,70,229,0.3)]">
             <Cpu className="w-5 h-5 text-white" />
           </div>
           <div>
-            <span className="font-bold text-sm bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent block leading-none mb-1">Raahim CORE</span>
+            <span className="font-bold text-sm bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent block leading-none mb-1">SYSTEM CORE</span>
             <span className="text-[9px] font-mono tracking-widest text-indigo-400/80 uppercase block leading-none">Agent v2.7.0</span>
           </div>
         </div>
@@ -232,7 +261,6 @@ export default function Home() {
         </button>
       </header>
 
-      {/* MOBILE DROPDOWN MENU */}
       <AnimatePresence>
         {isMobileMenuOpen && (
           <motion.div 
@@ -263,7 +291,6 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      {/* DESKTOP SIDEBAR MENU */}
       <aside className="w-80 border-r border-slate-800/40 bg-[#0b1120]/70 backdrop-blur-xl p-6 flex-col justify-between hidden lg:flex z-20 min-h-screen sticky top-0">
         <div className="space-y-8">
           <div className="flex items-center gap-3">
@@ -271,7 +298,7 @@ export default function Home() {
               <Cpu className="w-5 h-5 text-white" />
             </div>
             <div>
-              <span className="font-bold text-base bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent block">Raahim CORE</span>
+              <span className="font-bold text-base bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent block">SYSTEM CORE</span>
               <span className="text-[10px] font-mono tracking-widest text-indigo-400/80 uppercase block">Agent v2.7.0</span>
             </div>
           </div>
@@ -297,7 +324,6 @@ export default function Home() {
         </div>
       </aside>
 
-      {/* Main Working Framework Canvas Layout */}
       <main className="flex-1 flex flex-col p-5 lg:p-10 w-full z-10 relative overflow-y-auto">
         <div className="mb-6 lg:mb-8 border-b border-slate-900 pb-5">
           <h1 className="text-2xl lg:text-3xl font-extrabold text-white mb-2 bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">
@@ -312,7 +338,6 @@ export default function Home() {
 
         <section className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start flex-1 w-full">
           
-          {/* LEFT INTERACTIVE DYNAMIC CONFIGURATION FORM */}
           <div className="h-full flex flex-col">
             <div className="bg-[#0b1120]/50 border border-slate-800/50 rounded-2xl p-5 backdrop-blur-md flex-1 flex flex-col relative">
               <div className="flex items-center justify-between mb-3.5 border-b border-slate-900 pb-2">
@@ -338,12 +363,24 @@ export default function Home() {
                   {mode === "ats" && (
                     <motion.div key="atsIn" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex-1 flex flex-col gap-4">
                       {useUploadMode ? (
-                        <div className="h-2/5 relative border-2 border-dashed border-slate-800 rounded-xl bg-slate-950/20 p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-slate-900/40 transition-colors">
-                          <input type="file" accept=".pdf" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                        <div className={`h-2/5 relative border-2 border-dashed border-slate-800 rounded-xl bg-slate-950/20 p-4 flex flex-col items-center justify-center text-center transition-colors ${!selectedFile ? "cursor-pointer hover:bg-slate-900/40" : ""}`}>
+                          
+                          {!selectedFile && (
+                            <input type="file" accept=".pdf" onChange={handleFileChange} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                          )}
+
                           {selectedFile ? (
-                            <div className="flex flex-col items-center gap-1.5">
-                              <FileType className="w-8 h-8 text-indigo-400" />
-                              <p className="text-xs text-slate-200 font-medium font-mono truncate max-w-[240px]">{selectedFile.name}</p>
+                            <div className="flex flex-col items-center gap-1.5 z-20 w-full relative">
+                              <button 
+                                onClick={clearSelectedFile}
+                                className="absolute top-0 right-0 p-1.5 bg-slate-800/50 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 rounded-lg transition-colors cursor-pointer"
+                                title="Remove File"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                              
+                              <FileType className="w-8 h-8 text-indigo-400 mt-2" />
+                              <p className="text-xs text-slate-200 font-medium font-mono truncate max-w-[240px] px-6">{selectedFile.name}</p>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center gap-2">
@@ -371,7 +408,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* RIGHT TERMINAL VIEWPORT SCREEN LAYER */}
           <div className="h-full flex flex-col">
             <div className="bg-[#0b1120]/50 border border-slate-800/50 rounded-2xl p-5 backdrop-blur-md flex-1 flex flex-col min-h-[420px] relative">
               <div className="flex flex-wrap items-center justify-between gap-3 mb-4 border-b border-slate-800/40 pb-3.5">
@@ -379,7 +415,6 @@ export default function Home() {
                   <Terminal className="w-3.5 h-3.5 text-emerald-400" /> Terminal Monitor Output
                 </span>
                 
-                {/* Proposal / Text copy actions */}
                 {((mode === "proposal" && proposalOutput) || (mode === "cv" && cvTextPreview)) && !loading && (
                   <button onClick={copyToClipboard} className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200 cursor-pointer">
                     {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
@@ -387,14 +422,12 @@ export default function Home() {
                   </button>
                 )}
 
-                {/* CV PDF Download Action */}
                 {mode === "cv" && base64Pdf && !loading && (
                   <button onClick={downloadPdfFile} className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 py-1.5 px-3 rounded-xl hover:bg-emerald-500/20 transition-all cursor-pointer">
                     <Download className="w-3.5 h-3.5" /> Download Core CV PDF
                   </button>
                 )}
                 
-                {/* ATS Real-time direct compilation file trigger */}
                 {mode === "ats" && matchData && injectedSkills.length > 0 && !loading && (
                   <button onClick={downloadAtsUpdatedPdf} disabled={compilingAtsPdf} className="flex items-center gap-1.5 text-xs text-indigo-400 bg-indigo-500/10 border border-indigo-500/30 py-1.5 px-3 rounded-xl hover:bg-indigo-500/20 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
                     {compilingAtsPdf ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
@@ -426,11 +459,11 @@ export default function Home() {
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 w-full text-left">
                       <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 p-4 bg-slate-950/60 border border-slate-900 rounded-2xl text-center sm:text-left">
                         <div className="relative w-24 h-24 sm:w-28 sm:h-28 flex items-center justify-center shrink-0">
-                          <svg className="w-full h-full transform -rotate-90">
+                          <svg className="w-full h-full transform -rotate-90 transition-all duration-500 ease-out">
                             <circle cx="50%" cy="50%" r={radius} className="stroke-slate-800" strokeWidth="8" fill="transparent" />
-                            <circle cx="50%" cy="50%" r={radius} className="stroke-indigo-500" strokeWidth="8" fill="transparent" strokeDasharray={2 * Math.PI * radius} strokeDashoffset={strokeDashoffset} />
+                            <circle cx="50%" cy="50%" r={radius} className="stroke-indigo-500 transition-all duration-500 ease-out" strokeWidth="8" fill="transparent" strokeDasharray={2 * Math.PI * radius} strokeDashoffset={strokeDashoffset} />
                           </svg>
-                          <span className="absolute text-xl font-black text-white">{matchData?.score || 0}%</span>
+                          <span className="absolute text-xl font-black text-white">{displayScore}%</span>
                         </div>
                         <div className="mt-2 sm:mt-0">
                           <h4 className="text-white font-bold text-sm flex items-center justify-center sm:justify-start gap-1.5"><ShieldCheck className="w-4 h-4 text-indigo-400" /> Diagnostic Profile Match</h4>
@@ -473,10 +506,13 @@ export default function Home() {
 
                       <div className="space-y-3 border-t border-slate-900 pt-5">
                         <span className="text-[10px] font-bold text-slate-500 tracking-wider block mb-3 uppercase">ATS Diagnostic Improvements</span>
+                        {/* BULLETPROOF RENDERING: Automatically flattens stubborn objects if the AI disobeys */}
                         {matchData?.suggestions?.map((item, index) => (
                           <div key={index} className="flex gap-3 p-3.5 bg-slate-950/40 border border-slate-900 rounded-xl items-start">
                             <Lightbulb className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                            <p className="text-xs text-slate-300 leading-relaxed font-sans">{item}</p>
+                            <p className="text-xs text-slate-300 leading-relaxed font-sans">
+                              {renderSuggestionText(item)}
+                            </p>
                           </div>
                         ))}
                       </div>
